@@ -1,0 +1,6 @@
+730000
+soilpara_in
+1
+outputhalfwater.txt
+initial.txt
+globalaverage_halfwater.txt

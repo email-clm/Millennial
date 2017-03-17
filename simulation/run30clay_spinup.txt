@@ -1,0 +1,6 @@
+1460000
+soilpara_in30clay
+1
+output30clay_spinup.txt
+initial_equlibrium.txt
+globalaverage.txt

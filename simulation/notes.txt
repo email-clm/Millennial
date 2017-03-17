@@ -1,0 +1,3 @@
+The model driving forces are from CLM output, representing global average of top 30cm soil temperature and moisture. 
+
+The carbon input are from a high latitude, representing a low carbon input ecosystem.

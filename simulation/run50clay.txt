@@ -1,0 +1,6 @@
+730000
+soilpara_in50clay
+1
+output50clay.txt
+initial.txt
+globalaverage.txt
