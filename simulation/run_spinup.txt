@@ -1,6 +1,7 @@
 1460000
 soilpara_in
 1
+1
 output_spinup.txt
 initial_equlibrium.txt
 globalaverage.txt

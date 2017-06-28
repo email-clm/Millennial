@@ -8,7 +8,7 @@
 	implicit none
 	integer,parameter 	:: r8 = selected_real_kind(12) 	!8 byte real
 !	integer				:: flag					!century model or millenial model
-	integer 				:: nr, i, n, flag_output				
+	integer 				:: nr, i, n, flag_output	, flag_annual			
 	
  !	for initile file
 	character(len = 256) :: initialfile
@@ -161,8 +161,10 @@
 	write(*,*) "please enter the name of parameter file:"
 	read(*,*) soilparafile
 	
-	write(*,*) "please enter the name of file for saving model output! 1 for YES, 0 for NO"
+	write(*,*) "Do you want to save model output! 1 for YES, 0 for NO"
 	read(*,*) flag_output
+	write(*,*) "annaul output or daily? 1 for annual, 0 for daily"
+	read(*,*) flag_annual
 	if(flag_output == 1) then	
 	write(*,*) "please enter the name of file for saving model output!"
 	read(*,*) outputfile
@@ -328,7 +330,7 @@ call decomp(forc_st(n), forc_sw(n), psi_real(n), forc_npp(n), forc_roots(n), &
 	end do
 	
 	if(flag_output ==1) then
-call writeoutput(nr, forc_st, forc_sw, forc_npp, forc_roots, &
+call writeoutput(flag_annual, nr, forc_st, forc_sw, forc_npp, forc_roots, &
 		forc_exoenzyme, LMWC, POM, MB, MINERAL, SOILAGG, f_LM_leaching, f_MI_LM_des,&
 		f_LM_MI_sor, f_LM_MB_uptake, f_PO_LM_dep, f_MB_MI_sor, f_PO_SO_agg, f_MI_SO_agg,&
 		f_SO_PO_break, f_SO_MI_break, f_MB_atm, outputfile, DOC, ACTIVE, SLOW, PASSIVE, f_DOC_ATM, f_ACTIVE_ATM,&
@@ -431,7 +433,7 @@ end subroutine readdata
 !	read data subroutine end
 
 	
-subroutine writeoutput(nr, forc_st, forc_sw, forc_npp, forc_roots, &
+subroutine writeoutput(flag_annual, nr, forc_st, forc_sw, forc_npp, forc_roots, &
 		forc_exoenzyme, LMWC, POM, MB, MINERAL, SOILAGG, f_LM_leaching, f_MI_LM_des, &
 		f_LM_MI_sor, f_LM_MB_uptake, f_PO_LM_dep, f_MB_MI_sor,f_PO_SO_agg, f_MI_SO_agg, &
 		f_SO_PO_break, f_SO_MI_break, f_MB_atm, outputfile, DOC, ACTIVE, SLOW, PASSIVE, f_DOC_ATM, f_ACTIVE_ATM,&
@@ -441,6 +443,7 @@ subroutine writeoutput(nr, forc_st, forc_sw, forc_npp, forc_roots, &
 	implicit none
 	integer,parameter 		:: r8 = selected_real_kind(12) ! 8 byte real
 
+	integer, intent(in)		:: flag_annual
 	integer, intent(in)		:: nr
 	real(r8), intent(in)		:: forc_st(1:nr)
 	real(r8), intent(in)		:: forc_sw(1:nr)
@@ -486,6 +489,7 @@ subroutine writeoutput(nr, forc_st, forc_sw, forc_npp, forc_roots, &
 	
 	open (1000, FILE=outputfile)
 ! annual output
+if(flag_annual == 1) then
 do n = 1, nr / 365
 	clmw = 0.0
 	cpom = 0.0
@@ -507,23 +511,26 @@ end do
 	write(*,*) 'error in writing output'
 	end if
 end do
-	close(1000)
 ! annual output
 
-	!~ do n = 1, nr
-	!~ write(1000,*,iostat=ier)  n, &
-!~ !	forc_st(n), forc_sw(n), forc_npp(n), forc_roots(n), forc_exoenzyme(n), &
-	!~ LMWC(n), POM(n), MB(n), MINERAL(n), SOILAGG(n)!, &
-!~ !	f_LM_leaching(n), f_MI_LM_des(n),f_LM_MI_sor(n), f_LM_MB_uptake(n),f_PO_LM_dep(n), &
-!~ !	f_MB_MI_sor(n),f_PO_SO_agg(n), f_MI_SO_agg(n),f_SO_PO_break(n), f_SO_MI_break(n), f_MB_atm(n)!, &
-!~ !	DOC(n), ACTIVE(n), SLOW(n), PASSIVE(n)!, &
-!~ !	f_DOC_ATM(n),f_ACTIVE_ATM(n),f_PASSIVE_ATM(n), f_SLOW_ATM(n),f_ACTIVE_DOC(n), f_ACTIVE_SLOW(n), &
-!~ !	f_SLOW_PASSIVE(n), f_ACTIVE_PASSIVE(n),f_PASSIVE_ACTIVE(n), f_DOC_Leaching(n)
-	!~ if (ier /= 0) then
-	!~ write(*,*) 'error in writing output'
-	!~ end if
-	!~ end do
-	!~ close(1000)
+else
+! daily output
+	do n = 1, nr
+	write(1000,*,iostat=ier)  n, &
+!	forc_st(n), forc_sw(n), forc_npp(n), forc_roots(n), forc_exoenzyme(n), &
+	LMWC(n), POM(n), MB(n), MINERAL(n), SOILAGG(n)!, &
+!	f_LM_leaching(n), f_MI_LM_des(n),f_LM_MI_sor(n), f_LM_MB_uptake(n),f_PO_LM_dep(n), &
+!	f_MB_MI_sor(n),f_PO_SO_agg(n), f_MI_SO_agg(n),f_SO_PO_break(n), f_SO_MI_break(n), f_MB_atm(n)!, &
+!	DOC(n), ACTIVE(n), SLOW(n), PASSIVE(n)!, &
+!	f_DOC_ATM(n),f_ACTIVE_ATM(n),f_PASSIVE_ATM(n), f_SLOW_ATM(n),f_ACTIVE_DOC(n), f_ACTIVE_SLOW(n), &
+!	f_SLOW_PASSIVE(n), f_ACTIVE_PASSIVE(n),f_PASSIVE_ACTIVE(n), f_DOC_Leaching(n)
+	if (ier /= 0) then
+	write(*,*) 'error in writing output'
+	end if
+	end do
+! daily output
+end if
+	close(1000)
 end subroutine writeoutput
 !	write output subroutine end
 
@@ -681,7 +688,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 
 	! LMWC -> out of sysem LWMMWC leaching
 	if (LMWC > 0._r8) then
-        f_LM_leaching = LMWC * k_leaching * t_scalar * w_scalar
+        f_LM_leaching = LMWC * k_leaching * t_scalar !* w_scalar ! Xiaofeng removed water impact, after review at GBC June,2017
 	end if
 	
 	!~ ! MINERAL -> LWMC  desorption Xu found this processes is not imporant as we treat below desorption function as double way, blocked it
@@ -758,7 +765,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	
 	! MB -> ATM
 	if (MB > 0._r8) then
-        f_MB_atm = MB * kmic * t_scalar_mb * w_scalar + temp2
+        f_MB_atm = temp2 + MB * kmic * t_scalar_mb * w_scalar 
 	end if
 	
 	! POM -> SOILAGG

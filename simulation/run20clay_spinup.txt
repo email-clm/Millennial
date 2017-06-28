@@ -1,6 +1,7 @@
 1460000
 soilpara_in20clay
 1
+1
 output20clay_spinup.txt
 initial_equlibrium.txt
 globalaverage.txt

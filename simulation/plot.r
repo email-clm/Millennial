@@ -1,4 +1,4 @@
-setwd("/Users/xxuadmin/BUSINESS/PUBLICATIONS/WorkingOn_Abramoff_Perspective/millennial_code_2017Jan_Century_WT")
+setwd("/Users/xxuadmin/BUSINESS/PUBLICATIONS/WorkingOn_Abramoff_Perspective/millennial_code_2017July_Century_WT")
 
 # output
 data <- read.table("outputcontrol.txt")

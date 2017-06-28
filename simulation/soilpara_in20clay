@@ -15,8 +15,8 @@ kes 7.2
 CUEref 0.6
 CUET -0.012
 Taeref 15
-Vpom_lmc 15.
-kpom 15
+Vpom_lmc 10
+kpom 150
 k_POMes 12
 kmic_min 0.025
 kmic 0.036

@@ -23,7 +23,7 @@ mill.wfunc <- ( ( (psi - psimin)*(psi- psimax) ) / ( (psi - psimin)*(psi- psimax
 
 #plots
 #all temps in degrees C
-pdf(file="/Users/xxuadmin/BUSINESS/PUBLICATIONS/WorkingOn_Abramoff_Perspective/millennial_code_2017Jan_Century_WT/tandwfuncs.pdf", height = 4.52756*1, width = 4.52756*2)
+pdf(file="/Users/xxuadmin/BUSINESS/PUBLICATIONS/WorkingOn_Abramoff_Perspective/millennial_code_2017July_Century_WT/tandwfuncs.pdf", height = 4.52756*1, width = 4.52756*2)
 
 par(mfrow = c(1,2))
 plot(soilTemp, tfunc, ylim = c(0,6), xlab = expression("Soil Temperature (" ~ degree ~ "C)"), ylab = "f(T)", type = "l")

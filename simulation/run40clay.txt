@@ -1,6 +1,7 @@
 730000
 soilpara_in40clay
 1
+1
 output40clay.txt
 initial.txt
 globalaverage.txt
