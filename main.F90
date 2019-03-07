@@ -826,9 +826,9 @@ end subroutine decomp
 subroutine soilpsi(sand, clay, silt, vwc, vwcsat, organic, psisat, psi, smp_l)
 implicit none
 	integer,parameter 	:: r8 = selected_real_kind(12) 		! 8 byte real
-	real, intent(in) 		:: sand 		! percentage
-	real, intent(in) 		:: clay 		! percentage
-	real, intent(in)		:: silt 		! percentage
+	real, intent(in) 		:: sand 		! fraction (0-1)
+	real, intent(in) 		:: clay 		! fraction (0-1)
+	real, intent(in)		:: silt 		! fraction (0-1)
 	real, intent(in) 		:: vwc
 	real, intent(in) 		:: vwcsat
 	real, intent(in)		:: organic   	! read-in the organic matter content kg / m3
