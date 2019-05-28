@@ -40,17 +40,17 @@
 !	end of pools
 
 !	flux
-	real(r8), dimension(:), allocatable :: f_LM_leaching		! LM leaching
-	real(r8), dimension(:), allocatable :: f_MI_LM_des		! Mineral to LMWC
-	real(r8), dimension(:), allocatable :: f_LM_MI_sor		! LMWC to Mineral C
-	real(r8), dimension(:), allocatable :: f_LM_MB_uptake	! LMWC to microbial C
-	real(r8), dimension(:), allocatable :: f_PO_LM_dep		! PO 
-	real(r8), dimension(:), allocatable :: f_MB_MI_sor
-	real(r8), dimension(:), allocatable :: f_PO_SO_agg
-	real(r8), dimension(:), allocatable :: f_MI_SO_agg
-	real(r8), dimension(:), allocatable :: f_SO_PO_break
-	real(r8), dimension(:), allocatable :: f_SO_MI_break
-	real(r8), dimension(:), allocatable :: f_MB_atm
+	real(r8), dimension(:), allocatable :: f_LM_leaching	! LMWC leaching
+	real(r8), dimension(:), allocatable :: f_LM_MI_sor		! LMWC to MINERAL sorption
+	real(r8), dimension(:), allocatable :: f_LM_MB_uptake	! LMWC to MB uptake
+	real(r8), dimension(:), allocatable :: f_MI_LM_des		! MINERAL to LMWC desorption
+	real(r8), dimension(:), allocatable :: f_MI_SO_agg		! MINERAL to SOILAGG aggregation  
+	real(r8), dimension(:), allocatable :: f_SO_PO_break	! SOILAGG to POM breakdown
+	real(r8), dimension(:), allocatable :: f_SO_MI_break	! SOILAGG to MINERAL breakdown
+	real(r8), dimension(:), allocatable :: f_PO_LM_dep		! POM to LMWC depolymerization
+	real(r8), dimension(:), allocatable :: f_PO_SO_agg		! POM to SOILAGG aggregation
+	real(r8), dimension(:), allocatable :: f_MB_MI_sor		! MB to MINERAL sorption
+	real(r8), dimension(:), allocatable :: f_MB_atm			! MB to CO2
 !	end of flux
 
 
@@ -155,18 +155,18 @@
   
 	write(*,*) "This is the toy version of the millienum model at a daily time step"
   
-	write(*,*) "Pleae enter the number for total simulation steps"
+	write(*,*) "Please enter the number for total simulation steps:"
 	read(*,*) nr
 
-	write(*,*) "please enter the name of parameter file:"
+	write(*,*) "Please enter the name of the soil parameter file:"
 	read(*,*) soilparafile
 	
-	write(*,*) "Do you want to save model output! 1 for YES, 0 for NO"
+	write(*,*) "Do you want to save the model output? 1 for YES, 0 for NO"
 	read(*,*) flag_output
-	write(*,*) "annaul output or daily? 1 for annual, 0 for daily"
+	write(*,*) "Annual output or daily? 1 for annual, 0 for daily"
 	read(*,*) flag_annual
 	if(flag_output == 1) then	
-	write(*,*) "please enter the name of file for saving model output!"
+	write(*,*) "Please enter the name of file for saving model output:"
 	read(*,*) outputfile
 	end if
 	
@@ -221,14 +221,15 @@
 	open(unit = 10, file=soilparafile)
 	do i = 1, soil_par_num
 	read (10,*,iostat=ier) soil_par_name(i), dummy(i)
-	print *, dummy(i)
+	print *, soil_par_name(i),dummy(i)
 	if (ier /= 0) then
 	write(*,*)'soilpara: error in reading in soilpara_in'
 	end if
 	end do
 	close(10)
 
-!	Assign values
+!	Assign values read from soil parameter file to variables with names that match the
+!	names in the soil parameter file.
 	i = 1
 	clay				= dummy(i); i = i + 1
 	sand				= dummy(i); i = i + 1
@@ -261,24 +262,25 @@
 
 	AGGmax = AGGmax * (0.0265 * clay * 100.0 + 0.1351)
 !	print *, "vwcsat: ", vwcsat, clay, dummy(5)
-	write(*,*) "Model inializing! "
-	write(*,*) "please enter the name of file for initilizing the model"
+	write(*,*) "Model inializing!"
+	write(*,*) "Please enter the name of the file for initilizing the model:"
 	read(*,*) initialfile
 		
 	open(unit = 11, file=initialfile)
-		
+
+!	Assign initial Carbon pool values to variables.
 	read (11,*,iostat=ier) initial_pom, initial_lmwc, initial_mb, initial_mineral, initial_soilagg
 
 	if (ier /= 0) then
-	write(*,*)'model inializing failed !'
+	write(*,*)'Model inializing failed!'
 	else
-	write(*,*) "model inialization finished !"
+	write(*,*) "Model inialization finished!"
 	end if
 	close(11)
 
 	print *, 'read data start'
 	call readdata(nr, forc_st, forc_sw, forc_npp)
-	print *, 'read data end'
+	print *, 'Read data end'
 	
 	LMWC(1)=initial_lmwc
 	POM(1)=initial_pom
@@ -405,7 +407,7 @@ subroutine readdata(nr, forc_st, forc_sw, forc_npp)
 	read (*,*) filename
 	open (1001, file=filename, IOSTAT=ier)
 	if(ier /= 0) then
-	write (*,*) filename, 'file does not exist!'
+	write (*,*) filename, 'File does not exist!'
 	end if
 
 	do n = 1, 365 !nr !xiaofeng xu made this change to recycle the data, avoiding read in large dataset
@@ -415,11 +417,11 @@ subroutine readdata(nr, forc_st, forc_sw, forc_npp)
 	!~ end if
 !	print *, n, forc_st(n), forc_sw(n), forc_npp(n)
 	if (ier /= 0) then
-	write(*,*) 'error in reading input data'
+	write(*,*) 'Error in reading input data.'
 	end if
 	end do
 	close(1001)
-	print *, "reading forcing data finished"
+	print *, "Reading forcing data finished."
 	
 	do n = 366, nr
 	i = mod(n-1, 365) + 1
@@ -598,7 +600,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 
 	real		:: temp, temp2, temp3	! temporary variables
 	real		:: psi_tem1, psi_tem2
-	real		:: k_sorption          		! temporar variable for k of sorption
+	real		:: k_sorption          		! temporary variable for k of sorption
 !	real		:: Qmax				! maximum sorption capacity  mg / kg (mayes et al, 2012, SSSAJ)
 	real(r8)	:: t_scalar     			! soil temperature scalar for decomp
 	real(r8)	:: t_scalar_mb  			! soil temperature scalar for decomp
@@ -705,6 +707,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 !	write(*,*)"Qmax: ", Qmax
 	temp = (klmc_min * Qmax * LMWC ) / (2. + klmc_min * LMWC) - MINERAL
 !	if(temp > 0)then
+! 	This is equation 9 in the publication.
 	f_LM_MI_sor = (temp / Qmax + 0.0015) * LMWC / 50. * t_scalar * w_scalar !* t_scalar * w_scalar !* (LMWC / 200) * (LMWC / 200)
 !	else
 !	f_LM_MI_sor = 0.
@@ -734,6 +737,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	end if
 
 	! POM -> LMWC
+! 	This is equation 2 in the publication.
 	if (POM > 0._r8) then
         f_PO_LM_dep = Vpom_lmc * POM / (POM + kpom) * t_scalar * w_scalar !* (1. - MB / (MB + k_POMes)) 
 	end if
@@ -769,6 +773,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	end if
 	
 	! POM -> SOILAGG
+! 	This is equation 5 in publication.
 	if (POM > 0._r8) then
         f_PO_SO_agg = Vpom_agg * POM / (kpom_agg + POM) * (1. - SOILAGG / AGGmax) * t_scalar * w_scalar
 	end if
@@ -780,6 +785,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 !	print *, "POM > soilAGG: ",  f_PO_SO_agg, Vpom_agg, POM, kpom_agg, SOILAGG, AGGmax
 	
 	! MINERAL -> SOILAGG
+! 	This is equation 15 in the publication.
 	if (MINERAL > 0._r8) then
         f_MI_SO_agg = Vmin_agg * MINERAL / (kmin_agg + MINERAL) * (1. - SOILAGG / AGGmax) !* t_scalar * w_scalar
 	end if
@@ -789,6 +795,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	end if
 	
 	! SOILAGG -> MINERAL
+! 	This is equation 6 in publication.
 	if (SOILAGG > 0._r8) then
         f_SO_break = SOILAGG * kagg * t_scalar * w_scalar
 	f_SO_PO_break = f_SO_break * 1.5 / 3.
