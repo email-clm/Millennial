@@ -2,7 +2,8 @@
 	PROGRAM Millennial
 !	History
 !	Xiaofeng Xu created this code program to play with Millennial model structure (ICOS workshop Mar 14-16, 2016 in Boulder, CO)
-!	The code is created in May - June 2016, solely by Xiaofeng XU (xxu@mail.sdsu.edu)
+!	The code is created in May - June 2016, solely by Xiaofeng XU (xxu@sdsu.edu)
+!	Jan 2021, the code has been cleaned to close the three issued identifed when Benjamin Bond-Lamberty team converted to R script; the century model code has been removed.
 !	This is a toy verion of the Millennial model (C only version, N P will be added in future updates)
 
 	implicit none
@@ -80,7 +81,7 @@
 	real(r8), dimension(:), allocatable :: psi_real
 !	end of flux
 
-!	soil properties
+!	soil properties ! Sand, Clay, and Silt is fraction in present model while they are noted as percentage in the paper.
 	real			:: sand
 	real			:: clay
 	real			:: silt
@@ -315,11 +316,6 @@ call decomp(forc_st(n), forc_sw(n), psi_real(n), forc_npp(n), forc_roots(n), &
 !	print *, n, " days millennial simulation finished!"
 !	end do
 
-!call decomp_century(forc_st(n), psi_real(n), forc_npp(n), forc_roots(n), &
-!		forc_exoenzyme(n), clay, DOC(n), ACTIVE(n), SLOW(n), PASSIVE(n), f_DOC_ATM(n), f_ACTIVE_ATM(n),&
-!		f_PASSIVE_ATM(n), f_SLOW_ATM(n),f_ACTIVE_DOC(n), f_ACTIVE_SLOW(n), f_SLOW_PASSIVE(n), f_ACTIVE_PASSIVE(n),&
-!		f_PASSIVE_ACTIVE(n), f_DOC_Leaching(n))
- 
 !	upading the pool after each iteration 
 	if(n < nr) then
 	DOC(n+1)=DOC(n)
@@ -745,9 +741,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	if(f_PO_LM_dep > (0.9 * POM)) then
 	f_PO_LM_dep = 0.9 * POM
 	end if
-	
-!	print *, f_PO_LM_dep, Vpom_lmc, POM, kpom, MB, k_POMes
- 	
+		
 	! MB -> MINERAL
 	!~ if (MB > 0._r8) then
         !~ temp = kmic_min * Qmax * MB / (1.0 + kmic_min * MB) - MINERAL
@@ -781,9 +775,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	if(f_PO_SO_agg > 0.9 * POM) then
 	f_PO_SO_agg = 0.9 * POM
 	end if
-	
-!	print *, "POM > soilAGG: ",  f_PO_SO_agg, Vpom_agg, POM, kpom_agg, SOILAGG, AGGmax
-	
+
 	! MINERAL -> SOILAGG
 ! 	This is equation 15 in the publication.
 	if (MINERAL > 0._r8) then
@@ -801,9 +793,6 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	f_SO_PO_break = f_SO_break * 0.5
 	f_SO_MI_break = f_SO_break * 0.5
 	end if
-	
-!	print *, "before update:", forc_npp, LMWC,POM,MB,MINERAL,SOILAGG,f_PO_LM_dep,f_MI_LM_des,f_LM_leaching,f_LM_MI_sor,f_LM_MB_uptake,&
-!	f_SO_PO_break,f_PO_LM_dep,f_PO_SO_agg
 
 	if((f_PO_LM_dep + f_PO_SO_agg) > POM) then
 	temp3 = POM / (f_PO_LM_dep + f_PO_SO_agg)
@@ -817,14 +806,9 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	
 	MB = MB + (f_LM_MB_uptake - f_MB_MI_sor - f_MB_atm)
 	
-!	print *, "MB, LM_MB, MB_Mi, MB_ATM", MB, f_LM_MB_uptake, f_MB_MI_sor, f_MB_atm
-	
 	MINERAL = MINERAL + (f_LM_MI_sor + f_MB_MI_sor + f_SO_MI_break - f_MI_LM_des - f_MI_SO_agg)
 	
 	SOILAGG = SOILAGG + (f_PO_SO_agg + f_MI_SO_agg - f_SO_PO_break - f_SO_MI_break)
-	
-!	print *, "after update:", LMWC,POM,MB,MINERAL,SOILAGG,f_PO_LM_dep,f_MI_LM_des,f_LM_leaching,f_LM_MI_sor,f_LM_MB_uptake,&
-!	f_SO_PO_break,f_PO_LM_dep,f_PO_SO_agg
 	
 end subroutine decomp
 	! decomposition subroutine end
@@ -876,137 +860,3 @@ implicit none
 end subroutine soilpsi
 !	hydrological properties end
 
-
-!	decomposition subroutine CENTURY start
-!~ subroutine decomp_century(forc_st, psi, forc_npp, forc_roots, &
-		!~ forc_exoenzyme, clay, DOC, ACTIVE, SLOW, PASSIVE, f_DOC_ATM, f_ACTIVE_ATM,&
-		!~ f_PASSIVE_ATM, f_SLOW_ATM,f_ACTIVE_DOC, f_ACTIVE_SLOW, f_SLOW_PASSIVE, f_ACTIVE_PASSIVE,&
-		!~ f_PASSIVE_ACTIVE, f_DOC_Leaching)
-		
-	!~ implicit none
-	!~ integer,parameter :: r8 = selected_real_kind(12) ! 8 byte real
-	!~ integer,parameter :: r6 = selected_real_kind(8) ! 8 byte real
-	!~ real(r8), intent(in) :: forc_st    		! soil temperature (Kelvin)  (-nlevsno+1:nlevgrnd)
-	!~ real(r8), intent(in) :: psi      			! soil water potential at saturation for CN code (MPa)
-	!~ real(r8), intent(in) :: forc_npp
-	!~ real(r8), intent(in) :: forc_roots
-
-	!~ real(r8),intent(inout) 	:: forc_exoenzyme 
-	!~ real, intent(inout)	:: clay	
-	!~ real(r8),intent(inout) 	:: DOC  	
-	!~ real(r8),intent(inout) 	:: ACTIVE  		
-	!~ real(r8),intent(inout) 	:: SLOW 		 
-	!~ real(r8),intent(inout) 	:: PASSIVE 			 
-	!~ real(r8),intent(inout) 	:: f_DOC_ATM 		 
-	!~ real(r8),intent(inout) 	:: f_ACTIVE_ATM 		 
-	!~ real(r8),intent(inout) 	:: f_PASSIVE_ATM 		 
-	!~ real(r8),intent(inout) 	:: f_SLOW_ATM 		
-	!~ real(r8),intent(inout) 	:: f_ACTIVE_DOC        	 
-	!~ real(r8),intent(inout) 	:: f_ACTIVE_SLOW        	 
-	!~ real(r8),intent(inout) 	:: f_SLOW_PASSIVE        	 
-	!~ real(r8),intent(inout) 	:: f_ACTIVE_PASSIVE		
-	!~ real(r8),intent(inout)	:: f_PASSIVE_ACTIVE
-	!~ real(r8),intent(inout)	:: f_DOC_Leaching
-
-	!~ ! local pointers to implicit out scalars
-	!~ !
-	!~ ! !OTHER LOCAL VARIABLES:
-
-	!~ real		:: temp         !temporary variables
-	!~ real		:: k_1          	!temporar variable for k of sorption
-	!~ real		:: Qmax	!maximum sorption capacity  mg / kg (mayes et al, 2012, SSSAJ)
-	!~ real(r8)	:: dt           		!decomp timestep (seconds)
-	!~ real(r8)	:: dtd          		!decomp timestep (days)
-	!~ real(r8)	:: t_scalar     	!soil temperature scalar for decomp
-	!~ real(r8)	:: minpsi, maxpsi    !limits for soil water scalar for decomp
-!~ !	real		:: psi                   	!temporary soilpsi for water scalar
-	!~ real		:: w_scalar     !soil water scalar for decomp
-	!~ real		:: rate_scalar  !combined rate scalar for decomp
-	!~ real		:: pH
-
-	!-----------------------------------------------------------------------
-	!~ integer	:: timestep
-
-	!~ common	/global/ &
-		!~ timestep
-	
-	!~ ! set time steps
-	!~ dt = real(timestep, r8 )
-!~ !	dtd = dt/86400.0_r8
-	
-	!~ t_scalar = 0._r8
-	!~ temp = (forc_st - 25._r8)/10._r8
-	!~ t_scalar = t_scalar + 1.5**(temp)
-	
-	!~ minpsi = -10.0_r8;
-	!~ w_scalar = 0._r8
-	!~ maxpsi = -0.01
-	!~ pH = 7.0
-!~ !	psi = min(psi,maxpsi)
-!~ !	if (psi > minpsi) then
-!~ !	w_scalar = w_scalar + (log(minpsi/psi)/log(minpsi/maxpsi))
-!~ !	end if
-!~ !	xiaofeng replaced above codes with following
-	!~ if (psi > minpsi) then
-	!~ w_scalar = w_scalar + (psi-minpsi)*(psi-maxpsi)/((psi-minpsi)*(psi-maxpsi) - &
-		!~ (psi-(maxpsi-(maxpsi-minpsi)/3.))*(psi-(maxpsi-(maxpsi-minpsi)/3.)))
-	!~ end if
-	!~ w_scalar = w_scalar ** 0.5
-
-	!~ ! DOC -> leaching
-	!~ if (DOC > 0._r8) then
-        !~ f_DOC_leaching = DOC * 0.0001 * (DOC/(DOC + 100)) / dt * t_scalar * w_scalar
-	!~ end if
-
-	!~ ! DOC -> ATM
-	!~ if (DOC > 0._r8) then
-        !~ f_DOC_leaching = DOC * 0.005 / dt * t_scalar * w_scalar
-	!~ end if
-	
-	!~ ! ACTIVE -> ATM
-	!~ if (ACTIVE > 0._r8) then
-        !~ f_ACTIVE_ATM = ACTIVE * 0.0005 / dt * t_scalar * w_scalar
-	!~ end if
-
-	!~ ! SLOW -> ATM
-	!~ if (SLOW > 0._r8) then
-        !~ f_SLOW_ATM = SLOW * 0.0001 / dt * t_scalar * w_scalar
-	!~ end if
-	
-	!~ ! PASSIVE -> ATM
-	!~ if (PASSIVE > 0._r8) then
-        !~ f_PASSIVE_ATM = PASSIVE * 0.00001 / dt * t_scalar * w_scalar
-	!~ end if
-	
-	!~ ! ACTIVE -> DOC
-	!~ if(ACTIVE > 0._r8) then
-	!~ f_ACTIVE_DOC = ACTIVE * 0.001 / dt * t_scalar * w_scalar
-	!~ end if
-
-	!~ ! ACTIVE -> SLOW
-	!~ if (ACTIVE > 0._r8) then
-        !~ f_ACTIVE_SLOW = ACTIVE * 0.006 / dt * t_scalar * w_scalar
-	!~ end if
-	
-	!~ ! SLOW -> PASSIVE
-	!~ if (SLOW > 0._r8) then
-        !~ f_SLOW_PASSIVE = SLOW * 0.0001 / dt * t_scalar * SLOW / (SLOW + 100)
-	!~ end if
-	
-	!~ ! ACTIVE -> PASSIVE
-	!~ if (ACTIVE > 0._r8) then
-        !~ f_ACTIVE_PASSIVE = ACTIVE / dt * t_scalar * 0.0001
-	!~ end if
-	
-	!~ ! PASSIVE -> ACTIVE
-	!~ if (PASSIVE > 0._r8) then
-        !~ f_PASSIVE_ACTIVE = 0.0001 * (PASSIVE - 10) / (1000 + PASSIVE - 10) / dt * t_scalar * w_scalar
-	!~ end if
-	
-	!~ DOC = DOC + (f_ACTIVE_DOC - f_DOC_ATM - f_DOC_Leaching) * dt
-	!~ ACTIVE = ACTIVE + (f_PASSIVE_ACTIVE - f_ACTIVE_DOC - f_ACTIVE_SLOW - f_ACTIVE_PASSIVE - f_ACTIVE_ATM) * dt
-	!~ SLOW = SLOW + (f_ACTIVE_SLOW - f_SLOW_PASSIVE - f_SLOW_ATM) * dt
-	!~ PASSIVE = PASSIVE + (f_SLOW_PASSIVE + f_ACTIVE_PASSIVE - f_PASSIVE_ACTIVE - f_PASSIVE_ATM) * dt
-	
-!~ end subroutine decomp_century
-	!~ ! decomposition subroutine of CENTURY end
