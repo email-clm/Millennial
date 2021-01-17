@@ -25,32 +25,32 @@
 !	end of driving forces
 
 !	key variables to drive this model : semi-driving forces
-	real(r8), dimension(:), allocatable :: forc_npp
-	real(r8), dimension(:), allocatable :: forc_roots
-	real(r8), dimension(:), allocatable :: forc_exoenzyme !if modified this could be calcuated based on biomass and limitation of N or P
+	real(r8), dimension(:), allocatable :: forc_npp			! npp as input c
+	real(r8), dimension(:), allocatable :: forc_roots			! root C
+	real(r8), dimension(:), allocatable :: forc_exoenzyme 	!if modified this could be calcuated based on biomass and limitation of N or P
 !	end of key variables to drive this model : semi-driving forces
 
 !!	key variables to track the system over time
 !	pools 
-	real(r8), dimension(:), allocatable :: LMWC
-	real(r8), dimension(:), allocatable :: POM
-	real(r8), dimension(:), allocatable :: MB
-	real(r8), dimension(:), allocatable :: MINERAL
-	real(r8), dimension(:), allocatable :: SOILAGG
+	real(r8), dimension(:), allocatable :: LMWC			! Low molecular weight C - root exudates and the by-products of exoenzyme 
+	real(r8), dimension(:), allocatable :: POM				! free fragments of plant detritus
+	real(r8), dimension(:), allocatable :: MB				! microbial biomass C
+	real(r8), dimension(:), allocatable :: MINERAL			! mineral-associated C
+	real(r8), dimension(:), allocatable :: SOILAGG			! aggregates associated C
 !	end of pools
 
-!	flux
-	real(r8), dimension(:), allocatable :: f_LM_leaching	! LMWC leaching
-	real(r8), dimension(:), allocatable :: f_LM_MI_sor		! LMWC to MINERAL sorption
-	real(r8), dimension(:), allocatable :: f_LM_MB_uptake	! LMWC to MB uptake
-	real(r8), dimension(:), allocatable :: f_MI_LM_des		! MINERAL to LMWC desorption
-	real(r8), dimension(:), allocatable :: f_MI_SO_agg		! MINERAL to SOILAGG aggregation  
-	real(r8), dimension(:), allocatable :: f_SO_PO_break	! SOILAGG to POM breakdown
-	real(r8), dimension(:), allocatable :: f_SO_MI_break	! SOILAGG to MINERAL breakdown
-	real(r8), dimension(:), allocatable :: f_PO_LM_dep		! POM to LMWC depolymerization
-	real(r8), dimension(:), allocatable :: f_PO_SO_agg		! POM to SOILAGG aggregation
-	real(r8), dimension(:), allocatable :: f_MB_MI_sor		! MB to MINERAL sorption
-	real(r8), dimension(:), allocatable :: f_MB_atm			! MB to CO2
+!	flux corresponding to the Figure 1 in Abramoff et al. 2018
+	real(r8), dimension(:), allocatable :: f_LM_leaching		! carbon flow - LMWC leaching
+	real(r8), dimension(:), allocatable :: f_LM_MI_sor		! carbon flow - LMWC to MINERAL sorption
+	real(r8), dimension(:), allocatable :: f_LM_MB_uptake	! carbon flow - LMWC to MB uptake
+	real(r8), dimension(:), allocatable :: f_MI_LM_des		! carbon flow - MINERAL to LMWC desorption
+	real(r8), dimension(:), allocatable :: f_MI_SO_agg		! carbon flow - MINERAL to SOILAGG aggregation  
+	real(r8), dimension(:), allocatable :: f_SO_PO_break		! carbon flow - SOILAGG to POM breakdown
+	real(r8), dimension(:), allocatable :: f_SO_MI_break		! carbon flow - SOILAGG to MINERAL breakdown
+	real(r8), dimension(:), allocatable :: f_PO_LM_dep		! carbon flow - POM to LMWC depolymerization
+	real(r8), dimension(:), allocatable :: f_PO_SO_agg		! carbon flow - POM to SOILAGG aggregation
+	real(r8), dimension(:), allocatable :: f_MB_MI_sor		! carbon flow - MB to MINERAL sorption
+	real(r8), dimension(:), allocatable :: f_MB_atm			! carbon flow - MB to CO2
 !	end of flux
 
 
@@ -703,7 +703,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	! LMWC -> MINERAL: This desorption function is from Mayes 2012, SSAJ
 	klmc_min = (10.0 ** (-0.186 * pH - 0.216)) / 24.0
 !	Qmax = 10.0 ** (0.4833 * log(clay * 100.0) + 2.3282) * 1.35 ! 1.35 is bulk density to convert Q from mg/kg to mg/m3
-	Qmax = 10.0 ** (0.297 * log(clay * 100.0) + 2.355 + 0.50) !* 1.25  ! 1.35 is bulk density to convert Q from mg/kg to g/m2
+	Qmax = 10.0 ** (0.297 * log(clay * 100.0) + 2.855) * 1.35 !* 1.25  ! 1.35 is bulk density to convert Q from mg/kg to g/m2 later 1.35 was used as 1.00 here is incorrect.
 !	write(*,*)"Qmax: ", Qmax
 	temp = (klmc_min * Qmax * LMWC ) / (2. + klmc_min * LMWC) - MINERAL
 !	if(temp > 0)then
@@ -798,8 +798,8 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 ! 	This is equation 6 in publication.
 	if (SOILAGG > 0._r8) then
         f_SO_break = SOILAGG * kagg * t_scalar * w_scalar
-	f_SO_PO_break = f_SO_break * 1.5 / 3.
-	f_SO_MI_break = f_SO_break * 1.5 / 3.
+	f_SO_PO_break = f_SO_break * 0.5
+	f_SO_MI_break = f_SO_break * 0.5
 	end if
 	
 !	print *, "before update:", forc_npp, LMWC,POM,MB,MINERAL,SOILAGG,f_PO_LM_dep,f_MI_LM_des,f_LM_leaching,f_LM_MI_sor,f_LM_MB_uptake,&
