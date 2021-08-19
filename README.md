@@ -2,7 +2,7 @@
 
 Updates on May 27, 2019 
 Few bugs were identified and were fixed. 
-Note: This model is one example of the Millennial framework and multiple people are actively developing it. People who are interested in following the model development can keep an eye on all of these repositories.
+Note: This model is one example of the Millennial framework and multiple people are actively developing it. People who are interested in following the model development can keep an eye on all of these repositories. The recent update of the Millennial model (version 2.0) can be accessed at: https://github.com/rabramoff/Millennial
 
 March 14, 2017
 This is a repository for the newly developed Millennial model (version 1.0)
