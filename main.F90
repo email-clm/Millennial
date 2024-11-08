@@ -307,7 +307,7 @@ call decomp(forc_st(n), forc_sw(n), psi_real(n), forc_npp(n), forc_roots(n), &
 		f_LM_MI_sor(n), f_LM_MB_uptake(n),f_PO_LM_dep(n), f_MB_MI_sor(n), f_PO_SO_agg(n), f_MI_SO_agg(n),&
 		f_SO_PO_break(n), f_SO_MI_break(n),f_MB_atm(n))
  
-!	upading the pool after each iteration 
+!	update the pools after each iteration 
 	if(n < nr) then
 	LMWC(n+1)=LMWC(n)
 	POM(n+1)=POM(n)
@@ -318,7 +318,7 @@ call decomp(forc_st(n), forc_sw(n), psi_real(n), forc_npp(n), forc_roots(n), &
 !	print *, n, " days millennial simulation finished!"
 !	end do
 
-!	upading the pool after each iteration 
+!	update the pools after each iteration 
 !	if(n < nr) then
 !	DOC(n+1)=DOC(n)
 !	ACTIVE(n+1)=ACTIVE(n)
