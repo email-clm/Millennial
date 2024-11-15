@@ -3,39 +3,46 @@
 !	History
 !	Xiaofeng Xu created this code program to play with Millennial model structure (ICOS workshop Mar 14-16, 2016 in Boulder, CO)
 !	The code is created in May - June 2016, solely by Xiaofeng XU (xxu@sdsu.edu)
-!	Jan 2021, the code has been cleaned to close the three issued identifed when Benjamin Bond-Lamberty team converted to R script; the century model code has been removed.
-!	This is a toy verion of the Millennial model (C only version, N P will be added in future updates)
+!	Jan 2021, the code has been cleaned to close the three issues identified when Benjamin Bond-Lamberty's team converted to R script; the century model code has been removed.
+!	This is a toy version of the Millennial model (C-only version, N P will be added in future updates)
 
-!   Commented out model output for Century framework, added daily output for all processes Nov 7, 2024 - X Xu
+!   Commented out model output for Century framework, added daily outputs for all processes Nov 7, 2024 - X Xu
+
+!   Rose Abramoff modified the equations here to create Millennial V2, described in Abramoff et al. (2022); Xiaofeng brought in the edits by Rose on Nov 15, 2024
 
 	implicit none
 	integer,parameter 	:: r8 = selected_real_kind(12) 	!8 byte real
-!	integer				:: flag					!century model or millenial model
-	integer 				:: nr, i, n, flag_output	, flag_annual			
+
+	integer 				:: nr							! number of model steps (day)
+	integer 				:: i							! integer
+	integer 				:: n							! integer
+	integer 				:: flag_output					! flag saving model output or not
+	integer 				:: flag_annual					! flag saving model output as annual or daily
 	
  !	for initile file
-	character(len = 256) :: initialfile
-	character(len = 256) :: soilparafile
+	character(len = 256) :: initialfile						! name of the initial file
+	character(len = 256) :: soilparafile					! name of the soil parameter file
 
 !	for output file
-	character(len = 256) :: outputfile
+	character(len = 256) :: outputfile						! name of the output file
 !	character(len = 256) :: outputfile_century	
 !	end of defining output file
 
 !	the input data: driving forces
-	real(r8), dimension(:), allocatable :: forc_st
-	real(r8), dimension(:), allocatable :: forc_sw
+	real(r8), dimension(:), allocatable :: forc_st			! soil temperature
+	real(r8), dimension(:), allocatable :: forc_sw			! soil moisture
+	real(r8), dimension(:), allocatable :: forc_npp			! npp as input c	
 !	end of driving forces
 
 !	key variables to drive this model : semi-driving forces
-	real(r8), dimension(:), allocatable :: forc_npp			! npp as input c
-	real(r8), dimension(:), allocatable :: forc_roots			! root C
-	real(r8), dimension(:), allocatable :: forc_exoenzyme 	!if modified this could be calcuated based on biomass and limitation of N or P
+
+!	real(r8), dimension(:), allocatable :: forc_roots		! root C
+!	real(r8), dimension(:), allocatable :: forc_exoenzyme 	!if modified this could be calcuated based on biomass and limitation of N or P
 !	end of key variables to drive this model : semi-driving forces
 
 !!	key variables to track the system over time
 !	pools 
-	real(r8), dimension(:), allocatable :: LMWC			! Low molecular weight C - root exudates and the by-products of exoenzyme 
+	real(r8), dimension(:), allocatable :: LMWC				! Low molecular weight C - root exudates and the by-products of exoenzyme 
 	real(r8), dimension(:), allocatable :: POM				! free fragments of plant detritus
 	real(r8), dimension(:), allocatable :: MB				! microbial biomass C
 	real(r8), dimension(:), allocatable :: MINERAL			! mineral-associated C
@@ -43,41 +50,18 @@
 !	end of pools
 
 !	flux corresponding to the Figure 1 in Abramoff et al. 2018
-	real(r8), dimension(:), allocatable :: f_LM_leaching		! carbon flow - LMWC leaching
+	real(r8), dimension(:), allocatable :: f_LM_leaching	! carbon flow - LMWC leaching
 	real(r8), dimension(:), allocatable :: f_LM_MI_sor		! carbon flow - LMWC to MINERAL sorption
 	real(r8), dimension(:), allocatable :: f_LM_MB_uptake	! carbon flow - LMWC to MB uptake
 	real(r8), dimension(:), allocatable :: f_MI_LM_des		! carbon flow - MINERAL to LMWC desorption
 	real(r8), dimension(:), allocatable :: f_MI_SO_agg		! carbon flow - MINERAL to SOILAGG aggregation  
-	real(r8), dimension(:), allocatable :: f_SO_PO_break		! carbon flow - SOILAGG to POM breakdown
-	real(r8), dimension(:), allocatable :: f_SO_MI_break		! carbon flow - SOILAGG to MINERAL breakdown
+	real(r8), dimension(:), allocatable :: f_SO_PO_break	! carbon flow - SOILAGG to POM breakdown
+	real(r8), dimension(:), allocatable :: f_SO_MI_break	! carbon flow - SOILAGG to MINERAL breakdown
 	real(r8), dimension(:), allocatable :: f_PO_LM_dep		! carbon flow - POM to LMWC depolymerization
 	real(r8), dimension(:), allocatable :: f_PO_SO_agg		! carbon flow - POM to SOILAGG aggregation
 	real(r8), dimension(:), allocatable :: f_MB_MI_sor		! carbon flow - MB to MINERAL sorption
 	real(r8), dimension(:), allocatable :: f_MB_atm			! carbon flow - MB to CO2
 !	end of flux
-
-
-!!	key variables to track the system over time CENTURY
-!	pools 
-!	real(r8), dimension(:), allocatable :: DOC
-!	real(r8), dimension(:), allocatable :: ACTIVE
-!	real(r8), dimension(:), allocatable :: PASSIVE
-!	real(r8), dimension(:), allocatable :: SLOW
-!	end of pools
-
-!	flux
-!	real(r8), dimension(:), allocatable :: f_DOC_ATM
-!	real(r8), dimension(:), allocatable :: f_ACTIVE_ATM
-!	real(r8), dimension(:), allocatable :: f_PASSIVE_ATM
-!	real(r8), dimension(:), allocatable :: f_SLOW_ATM
-!	real(r8), dimension(:), allocatable :: f_ACTIVE_DOC
-!	real(r8), dimension(:), allocatable :: f_ACTIVE_SLOW
-!	real(r8), dimension(:), allocatable :: f_SLOW_PASSIVE
-!	real(r8), dimension(:), allocatable :: f_ACTIVE_PASSIVE
-!	real(r8), dimension(:), allocatable :: f_PASSIVE_ACTIVE
-!	real(r8), dimension(:), allocatable :: f_DOC_Leaching
-!	end of flux CENTURY
-
 
 !	soil properties over time
 	real(r8), dimension(:), allocatable :: psi_real
@@ -117,6 +101,7 @@
 	real(r8) 		:: kmin_agg
 	real(r8) 		:: AGGmax
 	real(r8) 		:: kagg
+	real(r8)		:: pAG_MI					! newly added parameter to adjust AGG to MAOC, the left over goes to POC
 !	end
 
 	real(r8)			:: initial_pom
@@ -126,7 +111,7 @@
 	real(r8)			:: initial_soilagg
 !	end of key variables
 
-	integer, parameter 		:: soil_par_num = 28
+	integer, parameter 		:: soil_par_num = 29
 !	character(len=256) 			:: soil_par_f = './soilpara_in' 	! local file name
 	integer 					:: ier              				! error code
 	character(len=40) 		:: soil_par_name(soil_par_num)	! parameter name
@@ -154,9 +139,10 @@
 		Vmin_agg, &
 		kmin_agg, &
 		AGGmax, &
-		kagg
+		kagg, &
+		pAG_MI
   
-	write(*,*) "This is the toy version of the millienum model at a daily time step"
+	write(*,*) "This is the toy version of the Millenium model at a daily time step"
   
 	write(*,*) "Please enter the number for total simulation steps:"
 	read(*,*) nr
@@ -177,8 +163,8 @@
 	allocate(forc_st(1:nr))
 	allocate(forc_sw(1:nr))
 	allocate(forc_npp(1:nr))
-	allocate(forc_roots(1:nr))
-	allocate(forc_exoenzyme(1:nr))
+!	allocate(forc_roots(1:nr))
+!	allocate(forc_exoenzyme(1:nr))
 	allocate(psi_real(1:nr))
 	
 	allocate(LMWC(1:nr))
@@ -200,26 +186,6 @@
 	allocate(f_MB_atm(1:nr))
 !	end of the allocation
 	
-!	CENTURY allocation
-!	allocate(DOC(1:nr))
-!	allocate(ACTIVE(1:nr))
-!	allocate(PASSIVE(1:nr))
-!	allocate(SLOW(1:nr))
-!	end of pools
-
-!	flux
-!	allocate(f_DOC_ATM(1:nr))
-!	allocate(f_ACTIVE_ATM(1:nr))
-!	allocate(f_PASSIVE_ATM(1:nr))
-!	allocate(f_SLOW_ATM(1:nr))
-!	allocate(f_ACTIVE_DOC(1:nr))
-!	allocate(f_ACTIVE_SLOW(1:nr))
-!	allocate(f_SLOW_PASSIVE(1:nr))
-!	allocate(f_ACTIVE_PASSIVE(1:nr))
-!	allocate(f_PASSIVE_ACTIVE(1:nr))
-!	allocate(f_DOC_Leaching(1:nr))
-!	end of allocation for CENTURY	
-	
 	write(*,*) 'Attempting to read soil parameters .....'
 	open(unit = 10, file=soilparafile)
 	do i = 1, soil_par_num
@@ -237,31 +203,32 @@
 	clay				= dummy(i); i = i + 1
 	sand				= dummy(i); i = i + 1
 	silt				= dummy(i); i = i + 1
-	maxpsi			= dummy(i); i = i + 1
-	vwcsat			= dummy(i); i = i + 1
-	organic			= dummy(i); i = i + 1
+	maxpsi				= dummy(i); i = i + 1
+	vwcsat				= dummy(i); i = i + 1
+	organic				= dummy(i); i = i + 1
 	k_leaching			= dummy(i); i = i + 1
 	Vm_l				= dummy(i); i = i + 1
 	km_l				= dummy(i); i = i + 1
-	M_Lmin			= dummy(i); i = i + 1
+	M_Lmin				= dummy(i); i = i + 1
 	klmc_min			= dummy(i); i = i + 1
-	Qmax			= dummy(i); i = i + 1
+	Qmax				= dummy(i); i = i + 1
 	klmc				= dummy(i); i = i + 1
-	kes				= dummy(i); i = i + 1
-	CUEref			= dummy(i); i = i + 1
-	CUET			= dummy(i); i = i + 1
-	Taeref			= dummy(i); i = i + 1
+	kes					= dummy(i); i = i + 1
+	CUEref				= dummy(i); i = i + 1
+	CUET				= dummy(i); i = i + 1
+	Taeref				= dummy(i); i = i + 1
 	Vpom_lmc			= dummy(i); i = i + 1
-	kpom			= dummy(i); i = i + 1
-	k_POMes			= dummy(i); i = i + 1
+	kpom				= dummy(i); i = i + 1
+	k_POMes				= dummy(i); i = i + 1
 	kmic_min			= dummy(i); i = i + 1
 	kmic				= dummy(i); i = i + 1
 	Vpom_agg			= dummy(i); i = i + 1
 	kpom_agg			= dummy(i); i = i + 1
 	Vmin_agg			= dummy(i); i = i + 1
 	kmin_agg			= dummy(i); i = i + 1
-	AGGmax			= dummy(i); i = i +1
-	kagg				= dummy(i)
+	AGGmax				= dummy(i); i = i +	1
+	kagg				= dummy(i); i = i + 1
+	pAG_MI				= dummy(i)
 
 	AGGmax = AGGmax * (0.0265 * clay * 100.0 + 0.1351)
 !	print *, "vwcsat: ", vwcsat, clay, dummy(5)
@@ -290,20 +257,14 @@
 	MB(1)=initial_mb
 	MINERAL(1)=initial_mineral
 	SOILAGG(1)=initial_soilagg
-
-!	DOC(1:)=LMWC(1)
-!	ACTIVE(1)=MB(1) + POM(1)
-!	PASSIVE(1)=MINERAL(1)
-!	SLOW(1)=SOILAGG(1)	
 	
 	do n = 1, nr
 	vwc = forc_sw(n)
 call soilpsi(sand, clay, silt, vwc, vwcsat, organic, psisat, psi, smp_l)
-!	soilpsi(sand, clay, silt, vwc, vwcsat, organic3d, psisat, psi, smp_l)
 	psi_real(n) = psi
 
-call decomp(forc_st(n), forc_sw(n), psi_real(n), forc_npp(n), forc_roots(n), &
-		forc_exoenzyme(n), clay, LMWC(n), POM(n), MB(n), MINERAL(n), SOILAGG(n), f_LM_leaching(n), f_MI_LM_des(n),&
+call decomp(forc_st(n), forc_sw(n), psi_real(n), forc_npp(n), clay, LMWC(n), POM(n), MB(n),&
+		 MINERAL(n), SOILAGG(n), f_LM_leaching(n), f_MI_LM_des(n),&
 		f_LM_MI_sor(n), f_LM_MB_uptake(n),f_PO_LM_dep(n), f_MB_MI_sor(n), f_PO_SO_agg(n), f_MI_SO_agg(n),&
 		f_SO_PO_break(n), f_SO_MI_break(n),f_MB_atm(n))
  
@@ -315,23 +276,12 @@ call decomp(forc_st(n), forc_sw(n), psi_real(n), forc_npp(n), forc_roots(n), &
 	MINERAL(n+1)=MINERAL(n)
 	SOILAGG(n+1)=SOILAGG(n)
 	endif
-!	print *, n, " days millennial simulation finished!"
-!	end do
-
-!	update the pools after each iteration 
-!	if(n < nr) then
-!	DOC(n+1)=DOC(n)
-!	ACTIVE(n+1)=ACTIVE(n)
-!	SLOW(n+1)=SLOW(n)
-!	PASSIVE(n+1)=PASSIVE(n)
-!	endif
-!	print *, n, " days century simulation finished!"
 	print *, n, "LMWC: ", LMWC(n),  "POMC: ",POM(n), "MBC: ", MB(n),  "MINERALC: ",MINERAL(n),  "AGGC: ",SOILAGG(n)
 	end do
 	
 	if(flag_output ==1) then
-call writeoutput(flag_annual, nr, forc_st, forc_sw, forc_npp, forc_roots, &
-		forc_exoenzyme, LMWC, POM, MB, MINERAL, SOILAGG, f_LM_leaching, f_MI_LM_des,&
+call writeoutput(flag_annual, nr, forc_st, forc_sw, forc_npp, &
+		LMWC, POM, MB, MINERAL, SOILAGG, f_LM_leaching, f_MI_LM_des,&
 		f_LM_MI_sor, f_LM_MB_uptake, f_PO_LM_dep, f_MB_MI_sor, f_PO_SO_agg, f_MI_SO_agg,&
 		f_SO_PO_break, f_SO_MI_break, f_MB_atm, outputfile)
 		
@@ -343,8 +293,8 @@ call writeoutput(flag_annual, nr, forc_st, forc_sw, forc_npp, forc_roots, &
 	deallocate(forc_st)
 	deallocate(forc_sw)
 	deallocate(forc_npp)
-	deallocate(forc_roots)
-	deallocate(forc_exoenzyme)
+!	deallocate(forc_roots)
+!	deallocate(forc_exoenzyme)
 	deallocate(psi_real)
 	
 	deallocate(LMWC)
@@ -365,25 +315,6 @@ call writeoutput(flag_annual, nr, forc_st, forc_sw, forc_npp, forc_roots, &
 	deallocate(f_SO_MI_break)
 	deallocate(f_MB_atm)
 !	end of the allocation
-	
-!	CENTURY allocation
-!	deallocate(DOC)
-!	deallocate(ACTIVE)
-!	deallocate(PASSIVE)
-!	deallocate(SLOW)
-!	end of pools
-
-!	flux
-!	deallocate(f_DOC_ATM)
-!	deallocate(f_ACTIVE_ATM)
-!	deallocate(f_PASSIVE_ATM)
-!	deallocate(f_SLOW_ATM)
-!	deallocate(f_ACTIVE_DOC)
-!	deallocate(f_ACTIVE_SLOW)
-!	deallocate(f_SLOW_PASSIVE)
-!	deallocate(f_ACTIVE_PASSIVE)
-!	deallocate(f_PASSIVE_ACTIVE)
-!	deallocate(f_DOC_Leaching)
 	
 	stop
 END PROGRAM Millennial
@@ -410,12 +341,8 @@ subroutine readdata(nr, forc_st, forc_sw, forc_npp)
 	write (*,*) filename, 'File does not exist!'
 	end if
 
-	do n = 1, 365 !nr !xiaofeng xu made this change to recycle the data, avoiding reading in large dataset
+	do n = 1, 365 !nr !xiaofeng xu made this change to recycle the data, avoiding reading in large datasets
 	read(1001,*,iostat=ier) forc_st(n), forc_sw(n), forc_npp(n)
-	!~ if(n > 730) then
-	!~ forc_st(n) = forc_st(n) + 3
-	!~ end if
-!	print *, n, forc_st(n), forc_sw(n), forc_npp(n)
 	if (ier /= 0) then
 	write(*,*) 'Error in reading input data.'
 	end if
@@ -428,21 +355,16 @@ subroutine readdata(nr, forc_st, forc_sw, forc_npp)
 	forc_st(n) = forc_st(i)
 	forc_sw(n) = forc_sw(i)
 	forc_npp(n) = forc_npp(i)
-!	print *, n, forc_st(n), forc_sw(n), forc_npp(n)
 	end do
 !	read
 end subroutine readdata
 !	read data subroutine end
 
 	
-subroutine writeoutput(flag_annual, nr, forc_st, forc_sw, forc_npp, forc_roots, &
-		forc_exoenzyme, LMWC, POM, MB, MINERAL, SOILAGG, f_LM_leaching, f_MI_LM_des, &
+subroutine writeoutput(flag_annual, nr, forc_st, forc_sw, forc_npp, &
+		LMWC, POM, MB, MINERAL, SOILAGG, f_LM_leaching, f_MI_LM_des, &
 		f_LM_MI_sor, f_LM_MB_uptake, f_PO_LM_dep, f_MB_MI_sor,f_PO_SO_agg, f_MI_SO_agg, &
 		f_SO_PO_break, f_SO_MI_break, f_MB_atm, outputfile)
-		
-!		, DOC, ACTIVE, SLOW, PASSIVE, f_DOC_ATM, f_ACTIVE_ATM,&
-!		f_PASSIVE_ATM, f_SLOW_ATM,f_ACTIVE_DOC, f_ACTIVE_SLOW, f_SLOW_PASSIVE, f_ACTIVE_PASSIVE,&
-!		f_PASSIVE_ACTIVE, f_DOC_Leaching)
 	
 	implicit none
 	integer,parameter 		:: r8 = selected_real_kind(12) ! 8 byte real
@@ -452,8 +374,8 @@ subroutine writeoutput(flag_annual, nr, forc_st, forc_sw, forc_npp, forc_roots, 
 	real(r8), intent(in)		:: forc_st(1:nr)
 	real(r8), intent(in)		:: forc_sw(1:nr)
 	real(r8), intent(in)		:: forc_npp(1:nr)
-	real(r8), intent(in)		:: forc_roots(1:nr)
-	real(r8), intent(in)		:: forc_exoenzyme(1:nr)
+!	real(r8), intent(in)		:: forc_roots(1:nr)
+!	real(r8), intent(in)		:: forc_exoenzyme(1:nr)
 	real(r8), intent(in)		:: LMWC(1:nr)
 	real(r8), intent(in)		:: POM(1:nr)
 	real(r8), intent(in)		:: MB(1:nr)
@@ -470,21 +392,6 @@ subroutine writeoutput(flag_annual, nr, forc_st, forc_sw, forc_npp, forc_roots, 
 	real(r8), intent(in)		:: f_SO_PO_break(1:nr)
 	real(r8), intent(in)		:: f_SO_MI_break(1:nr)
 	real(r8), intent(in)		:: f_MB_atm(1:nr)
-
-!	real(r8), intent(in)		:: DOC(1:nr)
-!	real(r8), intent(in)		:: ACTIVE(1:nr)
-!	real(r8), intent(in)		:: PASSIVE(1:nr)
-!	real(r8), intent(in)		:: SLOW(1:nr)
-!	real(r8), intent(in)		:: f_DOC_ATM(1:nr)
-!	real(r8), intent(in)		:: f_ACTIVE_ATM(1:nr)
-!	real(r8), intent(in)		:: f_PASSIVE_ATM(1:nr)
-!	real(r8), intent(in)		:: f_SLOW_ATM(1:nr)
-!	real(r8), intent(in)		:: f_ACTIVE_DOC(1:nr)
-!	real(r8), intent(in)		:: f_ACTIVE_SLOW(1:nr)
-!	real(r8), intent(in)		:: f_SLOW_PASSIVE(1:nr)
-!	real(r8), intent(in)		:: f_ACTIVE_PASSIVE(1:nr)
-!	real(r8), intent(in)		:: f_PASSIVE_ACTIVE(1:nr)
-!	real(r8), intent(in)		:: f_DOC_Leaching(1:nr)
 	
 	character(len = 256), intent(in)	:: outputfile
 	
@@ -551,10 +458,6 @@ else
 	f_LM_leaching(n), f_MI_LM_des(n),f_LM_MI_sor(n), f_LM_MB_uptake(n),f_PO_LM_dep(n), &
 	f_MB_MI_sor(n),f_PO_SO_agg(n), f_MI_SO_agg(n),f_SO_PO_break(n), f_SO_MI_break(n), f_MB_atm(n)
 	
-	!, &
-!	DOC(n), ACTIVE(n), SLOW(n), PASSIVE(n)!, &
-!	f_DOC_ATM(n),f_ACTIVE_ATM(n),f_PASSIVE_ATM(n), f_SLOW_ATM(n),f_ACTIVE_DOC(n), f_ACTIVE_SLOW(n), &
-!	f_SLOW_PASSIVE(n), f_ACTIVE_PASSIVE(n),f_PASSIVE_ACTIVE(n), f_DOC_Leaching(n)
 	if (ier /= 0) then
 	write(*,*) 'error in writing output'
 	end if
@@ -566,8 +469,8 @@ end subroutine writeoutput
 !	write output subroutine end
 
 !	decomposition subroutine start
-subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
-		forc_exoenzyme, clay, LMWC, POM, MB, MINERAL, SOILAGG, f_LM_leaching, f_MI_LM_des,&
+subroutine decomp(forc_st, forc_sw, psi, forc_npp, &
+		clay, LMWC, POM, MB, MINERAL, SOILAGG, f_LM_leaching, f_MI_LM_des,&
 		f_LM_MI_sor, f_LM_MB_uptake,f_PO_LM_dep, f_MB_MI_sor,f_PO_SO_agg, f_MI_SO_agg,&
 		f_SO_PO_break, f_SO_MI_break, f_MB_atm)
 		
@@ -578,10 +481,9 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	real(r8), intent(in) :: forc_sw    				! soil moisture (fraction)
 	real(r8), intent(in) :: psi      					! soil water potential at saturation for CN code (MPa)
 	real(r8), intent(in) :: forc_npp
-	real(r8), intent(in) :: forc_roots
+!	real(r8), intent(in) :: forc_roots
 !	real(r8), intent(in) :: pH
-
-	real(r8),intent(inout) 	:: forc_exoenzyme 
+!	real(r8),intent(inout) 	:: forc_exoenzyme 
 	real, intent(inout)	:: clay	
 	real(r8),intent(inout) 	:: LMWC  	
 	real(r8),intent(inout) 	:: POM  		
@@ -622,6 +524,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	real(r8) :: kmin_agg
 	real(r8) :: AGGmax
 	real(r8) :: kagg
+	real(r8) :: pAG_MI
 
 	! local pointers to implicit out scalars
 	!
@@ -666,7 +569,8 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 		Vmin_agg, &
 		kmin_agg, &
 		AGGmax, &
-		kagg
+		kagg, &
+		pAG_MI
 	
 	t_scalar = 0._r8
 	t_scalar_reverse = 0._r8
@@ -717,42 +621,32 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	!wfunc <- 1/(1 + 30 * exp(-9*relwc))
 	w_scalar = 1.0 / (1.0 + 30. * EXP(real(-9.0 * forc_sw)))
 
-	! LMWC -> out of sysem LWMMWC leaching
+	! LMWC -> out of system LWMMWC leaching
 	if (LMWC > 0._r8) then
-        f_LM_leaching = LMWC * k_leaching * t_scalar !* w_scalar ! Xiaofeng removed water impact, after review at GBC June,2017
+        f_LM_leaching = LMWC * k_leaching * t_scalar !* w_scalar ! Xiaofeng removed water impact, after a review paper at GBC June,2017
 	end if
 	
-	!~ ! MINERAL -> LWMC  desorption Xu found this processes is not imporant as we treat below desorption function as double way, blocked it
-	!~ if (MINERAL > M_Lmin) then
-        !~ f_MI_LM_des = Vm_l * (MINERAL - M_Lmin) / (km_l + MINERAL - M_Lmin) * t_scalar * w_scalar
-	!~ else
-	!~ f_MI_LM_des = 0.
-	!~ end if
+	! MINERAL -> LWMC  desorption Xu commented out the below desorption in V1, and turned it out on Nov 15, 2024
+	if (MINERAL > M_Lmin) then
+        f_MI_LM_des = Vm_l * (MINERAL - M_Lmin) / (km_l + MINERAL - M_Lmin) * t_scalar * w_scalar
+	else
+	f_MI_LM_des = 0.
+	end if
 
-	! LMWC -> MINERAL: This desorption function is from Mayes 2012, SSAJ
+! 	LMWC -> MINERAL: This adsorption/desorption function is from Mayes 2012, SSAJ
 	klmc_min = (10.0 ** (-0.186 * pH - 0.216)) / 24.0
-!	Qmax = 10.0 ** (0.4833 * log(clay * 100.0) + 2.3282) * 1.35 ! 1.35 is bulk density to convert Q from mg/kg to mg/m3
 	Qmax = 10.0 ** (0.297 * log(clay * 100.0) + 2.855) * 1.35 !* 1.25  ! 1.35 is bulk density to convert Q from mg/kg to g/m2 later 1.35 was used as 1.00 here is incorrect.
-!	write(*,*)"Qmax: ", Qmax
 	temp = (klmc_min * Qmax * LMWC ) / (2. + klmc_min * LMWC) - MINERAL
-!	if(temp > 0)then
+
 ! 	This is equation 9 in the publication.
 	f_LM_MI_sor = (temp / Qmax + 0.0015) * LMWC / 50. * t_scalar * w_scalar !* t_scalar * w_scalar !* (LMWC / 200) * (LMWC / 200)
-!	else
-!	f_LM_MI_sor = 0.
-!	end if
-!	f_LM_MI_sor = temp / (Qmax - MINERAL) * LMWC / 50. !* t_scalar * w_scalar !* (LMWC / 200) * (LMWC / 200)
 
 	if (f_LM_MI_sor < (LMWC * 0.9)) then
  	f_LM_MI_sor = f_LM_MI_sor 
 	else
 	f_LM_MI_sor = LMWC * 0.9
 	end if
-	
-	!~ if(f_LM_MI_sor < 0) then
-	!~ f_LM_MI_sor = 0.
-	!~ end if
-	
+		
 !	print *, klmc_min, Qmax, f_LM_MI_sor, LMWC, MINERAL
 
 	! LMWC -> MB
@@ -775,12 +669,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 	f_PO_LM_dep = 0.9 * POM
 	end if
 		
-	! MB -> MINERAL
-	!~ if (MB > 0._r8) then
-        !~ temp = kmic_min * Qmax * MB / (1.0 + kmic_min * MB) - MINERAL
-	!~ f_MB_MI_sor = temp / Qmax * MB / 50. * t_scalar * w_scalar  !* (MB / 200) * (MB / 200)
-	!~ end if
-	
+	! MB -> MINERAL	
 	if (MB > 0._r8 .and. MINERAL < Qmax) then
 	f_MB_MI_sor = MB * kmic * 0.15 * t_scalar_mb * w_scalar  !* (MB / 200) * (MB / 200)
 	else
@@ -823,8 +712,8 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, forc_roots, &
 ! 	This is equation 6 in publication.
 	if (SOILAGG > 0._r8) then
         f_SO_break = SOILAGG * kagg * t_scalar * w_scalar
-	f_SO_PO_break = f_SO_break * 0.5
-	f_SO_MI_break = f_SO_break * 0.5
+	f_SO_PO_break = f_SO_break * (1.0 - pAG_MI)
+	f_SO_MI_break = f_SO_break * pAG_MI
 	end if
 
 	if((f_PO_LM_dep + f_PO_SO_agg) > POM) then
@@ -848,30 +737,31 @@ end subroutine decomp
 
 !	hydrological properties start
 subroutine soilpsi(sand, clay, silt, vwc, vwcsat, organic, psisat, psi, smp_l)
+! this module is from community land model
 implicit none
 	integer,parameter 	:: r8 = selected_real_kind(12) 		! 8 byte real
 	real, intent(in) 		:: sand 		! fraction (0-1)
 	real, intent(in) 		:: clay 		! fraction (0-1)
 	real, intent(in)		:: silt 		! fraction (0-1)
-	real, intent(in) 		:: vwc
-	real, intent(in) 		:: vwcsat
+	real, intent(in) 		:: vwc			! volumetric water content
+	real, intent(in) 		:: vwcsat		! volumetric water content at saturation
 	real, intent(in)		:: organic   	! read-in the organic matter content kg / m3
-	real, intent(out) 		:: psisat
-	real, intent(out) 		:: psi
+	real, intent(out) 		:: psisat		! PSI at saturation
+	real, intent(out) 		:: psi			! psi
 	real, intent(out)		:: smp_l 		! soil matric potential (mm)
-	real					:: bsw 		! Clapp and Hornberger "b"
+	real					:: bsw 			! Clapp and Hornberger "b"
 	real					:: bsw2 		! Clapp and Hornberger "b" for CN module
-	real					:: smp 		! msoil matrix potential  it seems this is exactly same as smp_l
+	real					:: smp 			! msoil matrix potential  it seems this is exactly same as smp_l
 	real					:: sucsat  		! minimum soil suction
 	real					:: s_node 		! soil wetness
-	real					:: smpmin 	! restriction for min of soil potential
-	real					:: om_frac 	! organic matter fraction
+	real					:: smpmin 		! restriction for min of soil potential
+	real					:: om_frac 		! organic matter fraction
 	real					:: om_b 		! Clapp Hornberger parameter for organic soil (letts, 2000) Line 188 of iniTimeConst.F90
 	real					:: organic_max  ! orgnaic matter hwere oil is assumed to act like peat
 	real					:: om_sucsat 	! saturated suction for organic matter (Lets, 2000)
  
-	om_sucsat = 10.3_r8    				! saturated suction for organic matter (Lets, 2000)
-	smpmin = -1._r8    					! restriction for min of soil potential line 750 of iniTimeConst.F90
+	om_sucsat = 10.3_r8    					! saturated suction for organic matter (Lets, 2000)
+	smpmin = -1._r8    						! restriction for min of soil potential line 750 of iniTimeConst.F90
 	organic_max = 130._r8
 	om_b = 2.7_r8
 !	print * , vwc, vwcsat

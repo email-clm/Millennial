@@ -1,0 +1,1 @@
+./main.exe < run_control.txt

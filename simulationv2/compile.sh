@@ -1,0 +1,1 @@
+gfortran ../main.F90 -o main.exe
