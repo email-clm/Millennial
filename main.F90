@@ -67,24 +67,24 @@
 	real(r8), dimension(:), allocatable :: psi_real
 !	end of flux
 
-!	soil properties ! Sand, Clay, and Silt is fraction in present model while they are noted as percentage in the paper.
-	real			:: sand
-	real			:: clay
-	real			:: silt
-	real			:: maxpsi
-	real			:: vwc
-	real			:: vwcsat
-	real			:: smp_l
-	real			:: psisat
-	real			:: organic
-	real			:: psi
+!	soil properties ! bulk density, Clay, and Silt is fraction in present model while they are noted as percentage in the paper.
+	real(r8)		:: bulkdensity
+	real(r8)		:: clay
+	real(r8)		:: silt
+	real(r8)		:: maxpsi
+	real(r8)		:: vwc
+	real(r8)		:: vwcsat
+	real(r8)		:: smp_l
+	real(r8)		:: psisat
+	real(r8)		:: organic
+	real(r8)		:: psi
 	
 	real(r8) 		:: k_leaching 
 	real(r8) 		:: Vm_l	
 	real(r8) 		:: km_l 
 	real(r8) 		:: M_Lmin 		
 	real(r8) 		:: klmc_min			
-	real(r8) 		:: Qmax		
+	real(r8) 		:: par_pc		
 	real(r8) 		:: klmc		
 	real(r8) 		:: kes		
 	real(r8) 		:: CUEref
@@ -123,7 +123,7 @@
 		km_l, &
 		M_Lmin, &		
 		klmc_min, &		
-		Qmax, &	
+		par_pc, &	
 		klmc, &	
 		kes, &
 		CUEref, &
@@ -201,7 +201,7 @@
 !	names in the soil parameter file.
 	i = 1
 	clay				= dummy(i); i = i + 1
-	sand				= dummy(i); i = i + 1
+	bulkdensity			= dummy(i); i = i + 1
 	silt				= dummy(i); i = i + 1
 	maxpsi				= dummy(i); i = i + 1
 	vwcsat				= dummy(i); i = i + 1
@@ -211,7 +211,7 @@
 	km_l				= dummy(i); i = i + 1
 	M_Lmin				= dummy(i); i = i + 1
 	klmc_min			= dummy(i); i = i + 1
-	Qmax				= dummy(i); i = i + 1
+	par_pc				= dummy(i); i = i + 1
 	klmc				= dummy(i); i = i + 1
 	kes					= dummy(i); i = i + 1
 	CUEref				= dummy(i); i = i + 1
@@ -233,7 +233,7 @@
 	AGGmax = AGGmax * (0.0265 * clay * 100.0 + 0.1351)
 !	print *, "vwcsat: ", vwcsat, clay, dummy(5)
 	write(*,*) "Model inializing!"
-	write(*,*) "Please enter the name of the file for initilizing the model:"
+	write(*,*) "Please enter the name of the file for initializing the model:"
 	read(*,*) initialfile
 		
 	open(unit = 11, file=initialfile)
@@ -260,10 +260,10 @@
 	
 	do n = 1, nr
 	vwc = forc_sw(n)
-call soilpsi(sand, clay, silt, vwc, vwcsat, organic, psisat, psi, smp_l)
+call soilpsi(bulkdensity, clay, silt, vwc, vwcsat, organic, psisat, psi, smp_l)
 	psi_real(n) = psi
 
-call decomp(forc_st(n), forc_sw(n), psi_real(n), forc_npp(n), clay, LMWC(n), POM(n), MB(n),&
+call decomp(forc_st(n), forc_sw(n), psi_real(n), forc_npp(n), clay, bulkdensity, silt, LMWC(n), POM(n), MB(n),&
 		 MINERAL(n), SOILAGG(n), f_LM_leaching(n), f_MI_LM_des(n),&
 		f_LM_MI_sor(n), f_LM_MB_uptake(n),f_PO_LM_dep(n), f_MB_MI_sor(n), f_PO_SO_agg(n), f_MI_SO_agg(n),&
 		f_SO_PO_break(n), f_SO_MI_break(n),f_MB_atm(n))
@@ -469,22 +469,21 @@ end subroutine writeoutput
 !	write output subroutine end
 
 !	decomposition subroutine start
-subroutine decomp(forc_st, forc_sw, psi, forc_npp, &
+subroutine decomp(forc_st, forc_sw, psi, forc_npp, bulkdensity, silt, &
 		clay, LMWC, POM, MB, MINERAL, SOILAGG, f_LM_leaching, f_MI_LM_des,&
 		f_LM_MI_sor, f_LM_MB_uptake,f_PO_LM_dep, f_MB_MI_sor,f_PO_SO_agg, f_MI_SO_agg,&
 		f_SO_PO_break, f_SO_MI_break, f_MB_atm)
 		
 	implicit none
 	integer,parameter :: r8 = selected_real_kind(12) 	! 8 byte real
-	integer,parameter :: r6 = selected_real_kind(8) 	! 8 byte real
 	real(r8), intent(in) :: forc_st    				! soil temperature (Kelvin)  (-nlevsno+1:nlevgrnd)
 	real(r8), intent(in) :: forc_sw    				! soil moisture (fraction)
 	real(r8), intent(in) :: psi      					! soil water potential at saturation for CN code (MPa)
 	real(r8), intent(in) :: forc_npp
-!	real(r8), intent(in) :: forc_roots
-!	real(r8), intent(in) :: pH
+	real(r8), intent(in) :: bulkdensity
+	real(r8), intent(in) :: silt
 !	real(r8),intent(inout) 	:: forc_exoenzyme 
-	real, intent(inout)	:: clay	
+	real(r8), intent(inout)	:: clay	
 	real(r8),intent(inout) 	:: LMWC  	
 	real(r8),intent(inout) 	:: POM  		
 	real(r8),intent(inout) 	:: MB 		 
@@ -507,7 +506,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, &
 	real(r8) :: km_l 
 	real(r8) :: M_Lmin 		
 	real(r8) :: klmc_min			
-	real(r8) :: Qmax		
+	real(r8) :: par_pc		
 	real(r8) :: klmc		
 	real(r8) :: kes		
 	real(r8) :: CUEref
@@ -533,11 +532,10 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, &
 	real		:: temp, temp2, temp3	! temporary variables
 	real		:: psi_tem1, psi_tem2
 	real		:: k_sorption          		! temporary variable for k of sorption
-!	real		:: Qmax				! maximum sorption capacity  mg / kg (mayes et al, 2012, SSSAJ)
+	real		:: Qmax						! maximum sorption capacity see v2 paper
 	real(r8)	:: t_scalar     			! soil temperature scalar for decomp
 	real(r8)	:: t_scalar_mb  			! soil temperature scalar for decomp
 	real(r8)	:: minpsi, maxpsi    		! limits for soil water scalar for decomp
-!	real		:: psi                   			! temporary soilpsi for water scalar
 	real		:: w_scalar     			! soil water scalar for decomp
 	real		:: rate_scalar  			! combined rate scalar for decomp
 	real		:: pH
@@ -553,7 +551,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, &
 		km_l, &
 		M_Lmin, &		
 		klmc_min, &		
-		Qmax, &	
+		par_pc, &	
 		klmc, &	
 		kes, &
 		CUEref, &
@@ -635,7 +633,9 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, &
 
 ! 	LMWC -> MINERAL: This adsorption/desorption function is from Mayes 2012, SSAJ
 	klmc_min = (10.0 ** (-0.186 * pH - 0.216)) / 24.0
-	Qmax = 10.0 ** (0.297 * log(clay * 100.0) + 2.855) * 1.35 !* 1.25  ! 1.35 is bulk density to convert Q from mg/kg to g/m2 later 1.35 was used as 1.00 here is incorrect.
+!	Qmax = 10.0 ** (0.297 * log(clay * 100.0) + 2.855) * 1.35 !* 1.25  ! 1.35 is bulk density to convert Q from mg/kg to g/m2 later 1.35 was used as 1.00 here is incorrect.
+!	Xiaofeng replaced the Qmax equation with the one in V2 (Rose, 2022)
+	Qmax = bulkdensity * 1000. * (silt + clay) * par_pc
 	temp = (klmc_min * Qmax * LMWC ) / (2. + klmc_min * LMWC) - MINERAL
 
 ! 	This is equation 9 in the publication.
@@ -736,29 +736,29 @@ end subroutine decomp
 	! decomposition subroutine end
 
 !	hydrological properties start
-subroutine soilpsi(sand, clay, silt, vwc, vwcsat, organic, psisat, psi, smp_l)
+subroutine soilpsi(bulkdensity, clay, silt, vwc, vwcsat, organic, psisat, psi, smp_l)
 ! this module is from community land model
 implicit none
 	integer,parameter 	:: r8 = selected_real_kind(12) 		! 8 byte real
-	real, intent(in) 		:: sand 		! fraction (0-1)
-	real, intent(in) 		:: clay 		! fraction (0-1)
-	real, intent(in)		:: silt 		! fraction (0-1)
-	real, intent(in) 		:: vwc			! volumetric water content
-	real, intent(in) 		:: vwcsat		! volumetric water content at saturation
-	real, intent(in)		:: organic   	! read-in the organic matter content kg / m3
-	real, intent(out) 		:: psisat		! PSI at saturation
-	real, intent(out) 		:: psi			! psi
-	real, intent(out)		:: smp_l 		! soil matric potential (mm)
-	real					:: bsw 			! Clapp and Hornberger "b"
-	real					:: bsw2 		! Clapp and Hornberger "b" for CN module
-	real					:: smp 			! msoil matrix potential  it seems this is exactly same as smp_l
-	real					:: sucsat  		! minimum soil suction
-	real					:: s_node 		! soil wetness
-	real					:: smpmin 		! restriction for min of soil potential
-	real					:: om_frac 		! organic matter fraction
-	real					:: om_b 		! Clapp Hornberger parameter for organic soil (letts, 2000) Line 188 of iniTimeConst.F90
-	real					:: organic_max  ! orgnaic matter hwere oil is assumed to act like peat
-	real					:: om_sucsat 	! saturated suction for organic matter (Lets, 2000)
+	real(r8), intent(in) 		:: bulkdensity	! fraction (0-1)
+	real(r8), intent(in) 		:: clay 		! fraction (0-1)
+	real(r8), intent(in)		:: silt 		! fraction (0-1)
+	real(r8), intent(in) 		:: vwc			! volumetric water content
+	real(r8), intent(in) 		:: vwcsat		! volumetric water content at saturation
+	real(r8), intent(in)		:: organic   	! read-in the organic matter content kg / m3
+	real(r8), intent(out) 		:: psisat		! PSI at saturation
+	real(r8), intent(out) 		:: psi			! psi
+	real(r8), intent(out)		:: smp_l 		! soil matric potential (mm)
+	real(r8)					:: bsw 			! Clapp and Hornberger "b"
+	real(r8)					:: bsw2 		! Clapp and Hornberger "b" for CN module
+	real(r8)					:: smp 			! msoil matrix potential  it seems this is exactly same as smp_l
+	real(r8)					:: sucsat  		! minimum soil suction
+	real(r8)					:: s_node 		! soil wetness
+	real(r8)					:: smpmin 		! restriction for min of soil potential
+	real(r8)					:: om_frac 		! organic matter fraction
+	real(r8)					:: om_b 		! Clapp Hornberger parameter for organic soil (letts, 2000) Line 188 of iniTimeConst.F90
+	real(r8)					:: organic_max  ! orgnaic matter hwere oil is assumed to act like peat
+	real(r8)					:: om_sucsat 	! saturated suction for organic matter (Lets, 2000)
  
 	om_sucsat = 10.3_r8    					! saturated suction for organic matter (Lets, 2000)
 	smpmin = -1._r8    						! restriction for min of soil potential line 750 of iniTimeConst.F90
@@ -770,14 +770,14 @@ implicit none
 	end if
  
 	om_frac = min(organic / organic_max, 1._r8)
-	sucsat = 10. * ( 10.**(1.88-0.0131*sand) )
+	sucsat = 10. * ( 10.**(1.88-0.0131*(1. - silt - clay)))
 	bsw = (1.-om_frac)*(2.91 + 0.159*clay) + om_frac*om_b   
 	sucsat = (1.-om_frac)*sucsat + om_sucsat*om_frac  
 	s_node = min(1.0, max(vwc / vwcsat, 0.01))	    
 	smp = max(smpmin, (-sucsat * (s_node ** (-bsw))))
 	smp_l = smp
-	bsw2 = -(3.1 + 0.157 * clay - 0.003 * sand)
-	psisat = -(exp((1.54 - 0.0095*sand + 0.0063*(100.0-sand-clay))*log(10.0))*9.8e-5_r8)
+	bsw2 = -(3.1 + 0.157 * clay - 0.003 * (1. - clay - silt))
+	psisat = -(exp((1.54 - 0.0095*(1.0 - clay - silt) + 0.0063*(100.0-silt))*log(10.0))*9.8e-5_r8)
 	psi = psisat * ((vwc/vwcsat)**bsw2)
 !	print *, "psi: ", psi,psisat, bsw2, smp_l, sucsat, bsw, om_frac,organic,om_b
 end subroutine soilpsi

@@ -1,5 +1,5 @@
 clay 0.4
-sand 0.3
+bulkddensity 1.3
 silt 0.3
 maxpsi -0.1
 vwcsat 0.9
@@ -9,7 +9,7 @@ Vm_l 0.01
 km_l 25
 M_Lmin 10
 klmc_min 0.25
-Qmax 4500
+par_pc 0.86
 klmc 0.35
 kes 7.2
 CUEref 0.6
