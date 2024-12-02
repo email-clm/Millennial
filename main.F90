@@ -635,7 +635,7 @@ subroutine decomp(forc_st, forc_sw, psi, forc_npp, bulkdensity, silt, &
 	klmc_min = (10.0 ** (-0.186 * pH - 0.216)) / 24.0
 !	Qmax = 10.0 ** (0.297 * log(clay * 100.0) + 2.855) * 1.35 !* 1.25  ! 1.35 is bulk density to convert Q from mg/kg to g/m2 later 1.35 was used as 1.00 here is incorrect.
 !	Xiaofeng replaced the Qmax equation with the one in V2 (Rose, 2022)
-	Qmax = bulkdensity * 1000. * (silt + clay) * par_pc
+	Qmax = bulkdensity * 1000. * (silt + clay) * 100.0 * par_pc			! multiple 100.0 to convert silt + clary from fraction to percentage
 	temp = (klmc_min * Qmax * LMWC ) / (2. + klmc_min * LMWC) - MINERAL
 
 ! 	This is equation 9 in the publication.
