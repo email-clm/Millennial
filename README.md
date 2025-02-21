@@ -1,5 +1,7 @@
 # Millennial
 
+February 21, 2025, negative f_LM_MI_sor in the majority of sites and over time (in Guo's sutdy); this needs to be resolved in next version.
+
 August 18 2021. Added GitHub repository to the model version 2.0.
 
 Updates on May 27, 2019 
