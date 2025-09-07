@@ -19,7 +19,7 @@
 	integer 				:: flag_output					! flag saving model output or not
 	integer 				:: flag_annual					! flag saving model output as annual or daily
 	
- !	for initile file
+ !	for initial file
 	character(len = 256) :: initialfile						! name of the initial file
 	character(len = 256) :: soilparafile					! name of the soil parameter file
 
@@ -34,10 +34,10 @@
 	real(r8), dimension(:), allocatable :: forc_npp			! npp as input c	
 !	end of driving forces
 
-!	key variables to drive this model : semi-driving forces
+!	key variables to drive this model: semi-driving forces
 
 !	real(r8), dimension(:), allocatable :: forc_roots		! root C
-!	real(r8), dimension(:), allocatable :: forc_exoenzyme 	!if modified this could be calcuated based on biomass and limitation of N or P
+!	real(r8), dimension(:), allocatable :: forc_exoenzyme 	!if modified, this could be calculated based on biomass and limitation of N or P
 !	end of key variables to drive this model : semi-driving forces
 
 !!	key variables to track the system over time
